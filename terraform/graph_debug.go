@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/dag"
 	"github.com/hashicorp/terraform/dot"
 )
@@ -34,7 +35,11 @@ type DebugGraph struct {
 // written out to the DebugInfo log with DebugInfo.WriteGraph. A DebugGraph can
 // log data to it's internal buffer via the Printf and Write methods, which
 // will be also be written out to the DebugInfo archive.
-func NewDebugGraph(name string, g *Graph, opts *GraphDotOpts) (*DebugGraph, error) {
+func NewDebugGraph(name string, g *Graph, opts *GraphDotOpts) *DebugGraph {
+	if debug == nil {
+		return nil
+	}
+
 	dg := &DebugGraph{
 		Name:    name,
 		dotOpts: opts,
@@ -42,9 +47,10 @@ func NewDebugGraph(name string, g *Graph, opts *GraphDotOpts) (*DebugGraph, erro
 
 	err := dg.build(g)
 	if err != nil {
-		return nil, err
+		debug.WriteFile(dg.Name, []byte(err.Error()))
+		return nil
 	}
-	return dg, nil
+	return dg
 }
 
 // Printf to the internal buffer
@@ -106,6 +112,9 @@ func (dg *DebugGraph) DebugNode(v interface{}) {
 			break
 		}
 	}
+
+	// record as much of the node data structure as we can
+	spew.Fdump(&dg.buf, v)
 
 	// for now, record the order of visits in the node label
 	if node != nil {

@@ -32,10 +32,6 @@ func (b *BasicGraphBuilder) Build(path []string) (*Graph, error) {
 			continue
 		}
 
-		if err := step.Transform(g); err != nil {
-			return g, err
-		}
-
 		// record the debug graph for this transformation
 		stepName := fmt.Sprintf("%T", step)
 		dot := strings.LastIndex(stepName, ".")
@@ -43,11 +39,20 @@ func (b *BasicGraphBuilder) Build(path []string) (*Graph, error) {
 			stepName = stepName[dot+1:]
 		}
 
-		dg, err := NewDebugGraph("build-"+stepName, g, nil)
+		err := step.Transform(g)
+
+		// always log the graph state to see what transformations may have happened
+		dg := NewDebugGraph("build-"+stepName, g, nil)
+
 		if err != nil {
-			log.Printf("[ERROR] %v", err)
+			// add any error message to the graph log
+			dg.Printf("%s", err)
 		}
 		debug.WriteGraph(dg)
+
+		if err != nil {
+			return g, err
+		}
 	}
 
 	// Validate the graph structure

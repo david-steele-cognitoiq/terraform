@@ -29,10 +29,9 @@ type GraphDotOpts struct {
 // GraphDot returns the dot formatting of a visual representation of
 // the given Terraform graph.
 func GraphDot(g *Graph, opts *GraphDotOpts) (string, error) {
-	dg, err := NewDebugGraph("root", g, opts)
-	if err != nil {
-		return "", err
+	dg := NewDebugGraph("root", g, opts)
+	if dg == nil {
+		return "", nil
 	}
-
 	return dg.Dot.String(), nil
 }
