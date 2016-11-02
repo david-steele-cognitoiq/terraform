@@ -23,6 +23,8 @@ type GraphBuilder interface {
 type BasicGraphBuilder struct {
 	Steps    []GraphTransformer
 	Validate bool
+	// Optional name to add to the graph debug log
+	Name string
 }
 
 func (b *BasicGraphBuilder) Build(path []string) (*Graph, error) {
@@ -42,7 +44,12 @@ func (b *BasicGraphBuilder) Build(path []string) (*Graph, error) {
 		err := step.Transform(g)
 
 		// always log the graph state to see what transformations may have happened
-		dg := NewDebugGraph("build-"+stepName, g, nil)
+		debugName := "build-" + stepName
+		if b.Name != "" {
+			debugName = b.Name + "-" + debugName
+		}
+
+		dg := NewDebugGraph(debugName, g, nil)
 
 		if err != nil {
 			// add any error message to the graph log
@@ -113,6 +120,7 @@ func (b *BuiltinGraphBuilder) Build(path []string) (*Graph, error) {
 	basic := &BasicGraphBuilder{
 		Steps:    b.Steps(path),
 		Validate: b.Validate,
+		Name:     "builtin",
 	}
 
 	return basic.Build(path)
